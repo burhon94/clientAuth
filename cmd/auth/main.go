@@ -7,6 +7,7 @@ import (
 	"github.com/burhon94/alifMux/pkg/mux"
 	"github.com/burhon94/bdi/pkg/di"
 	"github.com/burhon94/clientAuth/cmd/auth/server"
+	"github.com/burhon94/clientAuth/pkg/client"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"net"
@@ -43,6 +44,7 @@ func serverUp(addr string, dsn string) {
 
 			return pool
 		},
+		client.NewClient,
 	)
 	if err != nil {
 		panic(fmt.Sprintf("can't set provide: %v", err))

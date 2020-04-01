@@ -16,6 +16,16 @@ func NewServer(router *mux.ExactMux, pool *pgxpool.Pool) *Server {
 }
 
 func (s *Server) Start() {
+	//_, err := s.pool.Exec(context.Background(), dl.ClientDDL)
+	//if err != nil {
+	//	panic(fmt.Sprintf("can't init DB: %v", err))
+	//}
+	//
+	//_, err = s.pool.Exec(context.Background(), dl.ClientDML)
+	//if err != nil {
+	//	panic(fmt.Sprintf("can't set DB: %v", err))
+	//}
+
 	s.InitRoutes()
 }
 
