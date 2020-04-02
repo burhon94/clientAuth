@@ -5,4 +5,9 @@ func (s *Server) InitRoutes() {
 		"/",
 		s.handleIndexPage(),
 	)
+
+	s.router.POST(
+		"/api/client/0",
+		s.handleNewClient(),
+		)
 }

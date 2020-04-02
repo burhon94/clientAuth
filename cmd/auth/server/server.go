@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/burhon94/alifMux/pkg/mux"
+	"github.com/burhon94/clientAuth/pkg/client"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"net/http"
 )
@@ -9,23 +10,14 @@ import (
 type Server struct {
 	router *mux.ExactMux
 	pool   *pgxpool.Pool
+	clientSvc *client.Client
 }
 
-func NewServer(router *mux.ExactMux, pool *pgxpool.Pool) *Server {
-	return &Server{router: router, pool: pool}
+func NewServer(router *mux.ExactMux, pool *pgxpool.Pool, clientSvc *client.Client) *Server {
+	return &Server{router: router, pool: pool, clientSvc: clientSvc}
 }
 
 func (s *Server) Start() {
-	//_, err := s.pool.Exec(context.Background(), dl.ClientDDL)
-	//if err != nil {
-	//	panic(fmt.Sprintf("can't init DB: %v", err))
-	//}
-	//
-	//_, err = s.pool.Exec(context.Background(), dl.ClientDML)
-	//if err != nil {
-	//	panic(fmt.Sprintf("can't set DB: %v", err))
-	//}
-
 	s.InitRoutes()
 }
 
