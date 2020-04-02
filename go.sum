@@ -2,6 +2,8 @@ github.com/burhon94/alifMux v0.0.0-20200319040859-aa36807e6ae7 h1:X4mNxzzB1MQ746
 github.com/burhon94/alifMux v0.0.0-20200319040859-aa36807e6ae7/go.mod h1:k72nNp264B+i5XqNROrgb8hasDyYztVPYThUNAPNjao=
 github.com/burhon94/bdi v0.0.0-20200314174333-14a2c983be03 h1:d7eWaYR0cKHva6kp8HiwYm8hsWhsmfST5Bh5Y3MEeC8=
 github.com/burhon94/bdi v0.0.0-20200314174333-14a2c983be03/go.mod h1:5dlhKKtK6ZZzW2SIHREuR0apJ60eQmjqiBGER6L9ONc=
+github.com/burhon94/json v0.0.0-20200317062550-c23cc861735d h1:1zjUqOFbCnw1pKLvn7k29GfkOKc2sqfr9dJv1DgWgAg=
+github.com/burhon94/json v0.0.0-20200317062550-c23cc861735d/go.mod h1:7njP7pc9j7DzUO3PtekfsdDzQoCeJL1shTF7XPcvarY=
 github.com/cockroachdb/apd v1.1.0 h1:3LFP3629v+1aKXU5Q37mxmRxX/pIu1nijXydLShEq5I=
 github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=

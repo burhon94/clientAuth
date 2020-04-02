@@ -7,12 +7,13 @@ CREATE TABLE if not exists clients
     login       TEXT UNIQUE NOT NULL,
     password    TEXT        NOT NULL,
     e_mail      TEXT,
-    phone       TEXT
+    avatar      TEXT,
+    phone       TEXT UNIQUE NOT NULL
 );
 
-INSERT INTO clients(first_name, last_name, middle_name, login, password, e_mail, phone)
-VALUES ('ADMIN', 'ADMINISTRATOR', 'ADM', 'admin', 'admin', 'admin@mail.com', '1111')
+INSERT INTO clients(first_name, last_name, middle_name, login, password, e_mail, avatar, phone)
+VALUES ('ADMIN', 'ADMINISTRATOR', 'ADM', 'admin', 'admin', 'admin@mail.com', 'NoAvatar', '1111')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO clients(first_name, last_name, login, password)
-values (?, ?, ? , ?);
+INSERT INTO clients(first_name, last_name, middle_name, login, password, e_mail, avatar, phone)
+values (?, ?, ?, ?, ?, ?, ?, ?);

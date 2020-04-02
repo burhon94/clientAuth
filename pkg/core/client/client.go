@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/burhon94/clientAuth/pkg/dl"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"log"
-	"net/http"
 )
 
 type Client struct {
@@ -27,14 +25,4 @@ func (c *Client) Start()  {
 	if err != nil {
 		panic(fmt.Sprintf("can't set DB: %v", err))
 	}
-}
-
-func (c *Client) NewClient(ctx context.Context, name, lastName, login, pass string, request *http.Request) (err error) {
-	_, err = c.pool.Exec(context.Background(), dl.ClientNew, name, lastName, login, pass)
-	if err != nil {
-		log.Printf("can't insert new client: %v", err)
-		return err
-	}
-
-	return nil
 }

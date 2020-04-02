@@ -7,7 +7,7 @@ import (
 	"github.com/burhon94/alifMux/pkg/mux"
 	"github.com/burhon94/bdi/pkg/di"
 	"github.com/burhon94/clientAuth/cmd/auth/server"
-	"github.com/burhon94/clientAuth/pkg/client"
+	"github.com/burhon94/clientAuth/pkg/core/client"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"net"
