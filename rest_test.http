@@ -5,11 +5,11 @@ Content-Type: application/json
   "first_name" : "TestName",
   "last_name" : "TestLastName",
   "middle_name" : "",
-  "login" : "TestLogin",
+  "login" : "TestLogin22",
   "password" : "TestPassword",
   "e_mail" : "",
   "avatar" : "",
-  "phone" : "9999"
+  "phone" : "999999"
 }
 
 ###

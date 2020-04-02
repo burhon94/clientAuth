@@ -10,6 +10,7 @@ import (
 )
 
 var ErrBadRequest = errors.New("bad request")
+var ErrLoginExist = errors.New("login is exist")
 var ErrPhoneRegistered = errors.New(fmt.Sprintf("%s", "ERROR: duplicate key value violates unique constraint \"clients_phone_key\" (SQLSTATE 23505)"))
 
 func (c *Client) NewClient(ctx context.Context, clientData NewClientStruct) (err error) {
@@ -51,29 +52,20 @@ func (c *Client) NewClient(ctx context.Context, clientData NewClientStruct) (err
 		clientData.Avatar = "NO-AVATAR"
 	}
 
+	err = c.CheckLogin(ctx, clientData.Login)
+	if err != nil {
+		return ErrLoginExist
+	}
+
+	err = c.CheckPhone(ctx, clientData.Phone)
+	if err != nil {
+		return ErrPhoneRegistered
+	}
+
 	_, err = c.pool.Exec(ctx, dl.ClientNew,
 		clientData.FirstName, clientData.LastName, clientData.MiddleName, clientData.Login, password, clientData.EMail, clientData.Avatar, clientData.Phone)
 	if err != nil {
-		// IT NOT WORK
-		pgErrText := err.Error()
-		errText := fmt.Sprintf("%s", "ERROR: duplicate key value violates unique constraint \"clients_login_key\" (SQLSTATE 23505)")
-		if pgErrText != errText {
-			return err
-		}
-		var unErr = errors.New(pgErrText)
-
-		var ErrLoginExist = errors.New(errText)
-
-		switch  {
-		case errors.Is(unErr, ErrLoginExist):
-			return ErrLoginExist
-
-		case errors.Is(unErr, ErrPhoneRegistered):
-			return ErrPhoneRegistered
-
-		default:
-			return err
-		}
+		return err
 	}
 
 	return nil

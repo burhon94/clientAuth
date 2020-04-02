@@ -44,19 +44,19 @@ func (s *Server) handleNewClient() http.HandlerFunc {
 				}
 				return
 
-			//case errors.Is(err, client.ErrLoginExist):
-			//	err := responses.SetResponseBadRequest(writer, "err.login_exist")
-			//	if err != nil {
-			//		responses.InternalErr(writer)
-			//	}
-			//	return
-			//
-			//case errors.Is(err, client.ErrPhoneRegistered):
-			//	err := responses.SetResponseBadRequest(writer, "err.phone_registered")
-			//	if err != nil {
-			//		responses.InternalErr(writer)
-			//	}
-			//	return
+			case errors.Is(err, client.ErrLoginExist):
+				err := responses.SetResponseBadRequest(writer, "err.login_exist")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+
+			case errors.Is(err, client.ErrPhoneRegistered):
+				err := responses.SetResponseBadRequest(writer, "err.phone_registered")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
 
 			default:
 				err := responses.SetResponseInternalErr(writer, "err.internal_err")
