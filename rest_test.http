@@ -2,14 +2,25 @@ POST http://localhost:9999/api/client/0
 Content-Type: application/json
 
 {
-  "first_name" : "TestName",
-  "last_name" : "TestLastName",
-  "middle_name" : "",
-  "login" : "TestLogin22",
-  "password" : "TestPassword",
-  "e_mail" : "",
-  "avatar" : "",
-  "phone" : "999999"
+  "first_name": "TestName",
+  "last_name": "TestLastName",
+  "middle_name": "",
+  "login": "TestLogin22",
+  "password": "TestPassword",
+  "e_mail": "",
+  "avatar": "",
+  "phone": "999999"
+}
+
+###
+
+POST http://localhost:9999/api/client/password
+Content-Type: application/json
+
+{
+  "id" : 1,
+  "old_pass" : "admin",
+  "new_pass" : "qasw"
 }
 
 ###

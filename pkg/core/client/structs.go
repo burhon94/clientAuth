@@ -10,3 +10,9 @@ type NewClientStruct struct {
 	Avatar     string `json:"avatar"`
 	Phone      string `json:"phone"`
 }
+
+type EditClientPass struct {
+	Id      int64  `json:"id"`
+	OldPass string `json:"old_pass"`
+	NewPass string `json:"new_pass"`
+}

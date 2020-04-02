@@ -21,3 +21,12 @@ func (c *Client) CheckPhone(ctx context.Context, phone string) error {
 
 	return nil
 }
+
+func (c *Client) CheckPass(ctx context.Context, id int64) (oldPass string, err error) {
+	err = c.pool.QueryRow(ctx, `SELECT password from clients WHERE id = $1`, id).Scan(&oldPass)
+	if err != nil {
+		return "", err
+	}
+
+	return oldPass, nil
+}
