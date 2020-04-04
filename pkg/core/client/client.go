@@ -15,7 +15,7 @@ func NewClient(pool *pgxpool.Pool) *Client {
 	return &Client{pool: pool}
 }
 
-func (c *Client) Start()  {
+func (c *Client) Start() {
 	_, err := c.pool.Exec(context.Background(), dl.ClientDDL)
 	if err != nil {
 		panic(fmt.Sprintf("can't init DB: %v", err))

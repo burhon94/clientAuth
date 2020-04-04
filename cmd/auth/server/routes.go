@@ -25,4 +25,9 @@ func (s *Server) InitRoutes() {
 		"/api/client/avatar",
 		s.handleEditAvatar(),
 	)
+
+	s.router.POST(
+		"/api/client/edit",
+		s.handleEditClient(),
+	)
 }

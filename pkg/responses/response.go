@@ -3,7 +3,7 @@ package responses
 import (
 	writeJSON "github.com/burhon94/json/cmd/writer"
 	"net/http"
-	)
+)
 
 type ErrorDTO struct {
 	Errors string `json:"errors"`
@@ -33,11 +33,7 @@ func SetResponseInternalErr(writer http.ResponseWriter, errText string) error {
 	return err
 }
 
-func BadRequest(writer http.ResponseWriter) {
-	http.Error(writer, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-}
-
-func InternalErr(writer http.ResponseWriter)  {
+func InternalErr(writer http.ResponseWriter) {
 	http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 

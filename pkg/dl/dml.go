@@ -22,3 +22,5 @@ values ($1, $2, $3 , $4, $5, $6, $7, $8);`
 const ClientUpdatePass = `UPDATE clients SET password = $2 WHERE id = $1;`
 
 const ClientUpdateAvatar = `UPDATE clients SET avatar = $2 WHERE id = $1;`
+
+const ClientUpdateData = `UPDATE clients SET first_name = $2, last_name = $3, middle_name = $4, e_mail = $5 WHERE id = $1;`

@@ -26,3 +26,11 @@ type EditClientAvatar struct {
 	Id        int64  `json:"id"`
 	AvatarUrl string `json:"avatar_url"`
 }
+
+type EditClient struct {
+	Id         int64  `json:"id"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	MiddleName string `json:"middle_name"`
+	EMail      string `json:"e_mail"`
+}

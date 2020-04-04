@@ -270,3 +270,57 @@ func (s *Server) handleEditAvatar() http.HandlerFunc {
 		}
 	}
 }
+
+func (s *Server) handleEditClient() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		var clientRequest client.EditClient
+		err := readJSON.ReadJSONHTTP(request, &clientRequest)
+		if err != nil {
+			err := responses.SetResponseBadRequest(writer, "err.invalid_json")
+			if err != nil {
+				responses.InternalErr(writer)
+			}
+
+			return
+		}
+
+		ctx, _ := context.WithTimeout(request.Context(), time.Second)
+		err = s.clientSvc.EditClient(ctx, clientRequest.Id, clientRequest.FirstName, clientRequest.LastName, clientRequest.MiddleName, clientRequest.EMail)
+		if err != nil {
+			switch {
+			case errors.Is(err, client.ErrBadRequest):
+				err := responses.SetResponseBadRequest(writer, "err.bad_request")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+
+			case errors.Is(err, client.ErrInternal):
+				err := responses.SetResponseInternalErr(writer, "err.internal_error")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+
+			case errors.Is(err, client.ErrTimeCtx):
+				err := responses.SetResponseTimeOut(writer)
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+
+			default:
+				err := responses.SetResponseBadRequest(writer, "err.unknown_error")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+			}
+		}
+
+		err = responses.ResponseOK(writer)
+		if err != nil {
+			responses.InternalErr(writer)
+		}
+	}
+}

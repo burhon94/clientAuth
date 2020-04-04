@@ -247,3 +247,51 @@ func (c *Client) EditClientAvatar(ctx context.Context, clientId int64, avatarUrl
 
 	return nil
 }
+
+func (c *Client) EditClient(ctx context.Context, id int64, firstName, lastName, middleName, eMail string) error {
+	if id <= 0 {
+		return ErrBadRequest
+	}
+
+	err := c.CheckId(ctx, id)
+	if err != nil {
+		switch {
+		case errors.Is(err, errId):
+			return ErrBadRequest
+
+		case errors.Is(err, ErrInternal):
+			return ErrInternal
+
+		case errors.Is(err, ErrTimeCtx):
+			return ErrTimeCtx
+		}
+	}
+
+	if firstName == "" {
+		return ErrBadRequest
+	}
+
+	if lastName == "" {
+		return ErrBadRequest
+	}
+
+	if middleName == "" {
+		middleName = ""
+	}
+
+	if eMail == "" {
+		eMail = ""
+	}
+
+	_, err = c.pool.Exec(ctx, dl.ClientUpdateData, id, firstName, lastName, middleName, eMail)
+	if err != nil {
+		switch {
+		case errors.Is(err, context.DeadlineExceeded):
+			return ErrTimeCtx
+		}
+
+		return ErrInternal
+	}
+
+	return nil
+}

@@ -18,8 +18,8 @@ POST http://localhost:9999/api/signin
 Content-Type: application/json
 
 {
-  "login" : "admin",
-  "pass" : "admin"
+  "login": "admin",
+  "pass": "admin"
 }
 
 ###
@@ -28,9 +28,9 @@ POST http://localhost:9999/api/client/password
 Content-Type: application/json
 
 {
-  "id" : 1,
-  "old_pass" : "admin",
-  "new_pass" : "qasw"
+  "id": 1,
+  "old_pass": "admin",
+  "new_pass": "qasw"
 }
 
 ###
@@ -39,8 +39,21 @@ POST http://localhost:9999/api/client/avatar
 Content-Type: application/json
 
 {
-  "id" : 2,
-  "avatar_url" : "159"
+  "id": 2,
+  "avatar_url": "159"
+}
+
+###
+
+POST http://localhost:9999/api/client/edit
+Content-Type: application/json
+
+{
+  "id": 70,
+  "first_name": "512",
+  "last_name": "last",
+  "middle_name": "6512",
+  "e_mail": ""
 }
 
 ###
