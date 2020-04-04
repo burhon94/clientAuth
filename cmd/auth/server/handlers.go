@@ -61,11 +61,26 @@ func (s *Server) handleNewClient() http.HandlerFunc {
 				}
 				return
 
-			default:
+			case errors.Is(err, client.ErrTimeCtx):
+				err := responses.SetResponseTimeOut(writer)
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+
+			case errors.Is(err, client.ErrInternal):
 				err := responses.SetResponseInternalErr(writer, "err.internal_err")
 				if err != nil {
 					responses.InternalErr(writer)
 				}
+				return
+
+			default:
+				err := responses.SetResponseBadRequest(writer, "err.unknown_err")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
 			}
 		}
 
@@ -91,35 +106,49 @@ func (s *Server) handleSignIn() http.HandlerFunc {
 
 		ctx, _ := context.WithTimeout(request.Context(), time.Second)
 		err = s.clientSvc.SignIn(ctx, requestData)
-		switch {
-		case errors.Is(err, client.ErrInvalidLogin):
-			err := responses.SetResponseBadRequest(writer, "err.login_wrong")
-			if err != nil {
-				responses.InternalErr(writer)
-			}
-			return
+		if err != nil {
+			switch {
+			case errors.Is(err, client.ErrInvalidLogin):
+				err := responses.SetResponseBadRequest(writer, "err.login_wrong")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
 
-		case errors.Is(err, client.ErrInvalidPassword):
-			err := responses.SetResponseBadRequest(writer, "err.password_wrong")
-			if err != nil {
-				responses.InternalErr(writer)
-			}
-			return
+			case errors.Is(err, client.ErrInvalidPassword):
+				err := responses.SetResponseBadRequest(writer, "err.password_wrong")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
 
-		case errors.Is(err, client.ErrInternal):
-			err := responses.SetResponseInternalErr(writer, "err.internal_error")
-			if err != nil {
-				responses.InternalErr(writer)
-			}
-			return
+			case errors.Is(err, client.ErrInternal):
+				err := responses.SetResponseInternalErr(writer, "err.internal_error")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
 
-		case errors.Is(err, client.ErrBadRequest):
-			err := responses.SetResponseBadRequest(writer, "err.bad_request")
-			if err != nil {
-				responses.InternalErr(writer)
-			}
-			return
+			case errors.Is(err, client.ErrBadRequest):
+				err := responses.SetResponseBadRequest(writer, "err.bad_request")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
 
+			case errors.Is(err, client.ErrTimeCtx):
+				err := responses.SetResponseTimeOut(writer)
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+
+			default:
+				err := responses.SetResponseBadRequest(writer, "err.unknown_err")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+			}
 		}
 
 		err = responses.ResponseOK(writer)
@@ -160,11 +189,24 @@ func (s *Server) handleEditPass() http.HandlerFunc {
 				}
 				return
 
-			default:
-				err := responses.SetResponseInternalErr(writer, "err.internal_err")
+			case errors.Is(err, client.ErrTimeCtx):
+				err := responses.SetResponseTimeOut(writer)
 				if err != nil {
 					responses.InternalErr(writer)
 				}
+
+			case errors.Is(err, client.ErrInternal):
+				err := responses.SetResponseInternalErr(writer, "err.internal_error")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+
+			default:
+				err := responses.SetResponseBadRequest(writer, "err.unknown_err")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
 			}
 		}
 
@@ -206,6 +248,19 @@ func (s *Server) handleEditAvatar() http.HandlerFunc {
 				}
 				return
 
+			case errors.Is(err, client.ErrTimeCtx):
+				err := responses.SetResponseTimeOut(writer)
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+
+			default:
+				err := responses.SetResponseBadRequest(writer, "err.unknown_error")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
 			}
 		}
 

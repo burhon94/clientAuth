@@ -8,8 +8,8 @@ import (
 )
 
 type Server struct {
-	router *mux.ExactMux
-	pool   *pgxpool.Pool
+	router    *mux.ExactMux
+	pool      *pgxpool.Pool
 	clientSvc *client.Client
 }
 

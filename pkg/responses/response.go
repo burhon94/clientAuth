@@ -50,3 +50,13 @@ func ResponseOK(writer http.ResponseWriter) error {
 
 	return err
 }
+
+func SetResponseTimeOut(writer http.ResponseWriter) error {
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusGatewayTimeout)
+	err := writeJSON.WriteJSONHTTP(writer, &ErrorDTO{
+		"err.context_timeOut",
+	})
+
+	return err
+}

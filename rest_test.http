@@ -3,13 +3,13 @@ Content-Type: application/json
 
 {
   "first_name": "TestName",
-  "last_name": "TestLastName",
+  "last_name": "TestSurName",
   "middle_name": "",
-  "login": "TestLogin22",
+  "login": "TestLogin2",
   "password": "TestPassword",
   "e_mail": "",
   "avatar": "",
-  "phone": "999999"
+  "phone": "99999"
 }
 
 ###
@@ -19,7 +19,7 @@ Content-Type: application/json
 
 {
   "login" : "admin",
-  "pass" : "qasw"
+  "pass" : "admin"
 }
 
 ###

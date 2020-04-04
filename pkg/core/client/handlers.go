@@ -9,13 +9,6 @@ import (
 	"log"
 )
 
-var ErrBadRequest = errors.New("bad request")
-var ErrInternal = errors.New("internal error")
-var ErrLoginExist = errors.New("login is exist")
-var ErrPhoneRegistered = errors.New("phone been registered")
-var ErrInvalidPassword = errors.New("invalid password")
-var ErrInvalidLogin = errors.New("invalid login")
-
 func (c *Client) SignIn(ctx context.Context, clientRequest SignIn) (err error) {
 	if clientRequest.Login == "" {
 		return ErrBadRequest
@@ -25,25 +18,36 @@ func (c *Client) SignIn(ctx context.Context, clientRequest SignIn) (err error) {
 		return ErrBadRequest
 	}
 
-	var name, surName, midleName, eMail, avata, phone string
-
 	err = c.CheckPassWithLogin(ctx, clientRequest.Login, clientRequest.Pass)
-	switch {
-	case errors.Is(err, ErrInternal):
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrInternal):
+			return ErrInternal
+
+		case errors.Is(err, ErrInvalidLogin):
+			return ErrInvalidLogin
+
+		case errors.Is(err, ErrInvalidPassword):
+			return ErrInvalidPassword
+
+		case errors.Is(err, ErrTimeCtx):
+			return ErrTimeCtx
+		}
+
 		return ErrInternal
-
-
-	case errors.Is(err, ErrInvalidLogin):
-		return ErrInvalidLogin
-
-	case errors.Is(err, ErrInvalidPassword):
-		return ErrInvalidPassword
 	}
 
-	err = c.pool.QueryRow(ctx, dl.SignIn, clientRequest.Login).Scan(&name, &surName, &midleName, &eMail, &avata, &phone)
+	var name, surName, middleName, eMail, avatar, phone string
+
+	err = c.pool.QueryRow(ctx, dl.SignIn, clientRequest.Login).Scan(&name, &surName, &middleName, &eMail, &avatar, &phone)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
 			return ErrInvalidLogin
+
+		case errors.Is(err, context.DeadlineExceeded):
+			return ErrTimeCtx
+
 		}
 
 		return ErrInternal
@@ -53,6 +57,46 @@ func (c *Client) SignIn(ctx context.Context, clientRequest SignIn) (err error) {
 }
 
 func (c *Client) NewClient(ctx context.Context, clientData NewClientStruct) (err error) {
+	if clientData.Login == "" {
+		return ErrBadRequest
+	}
+
+	err = c.CheckLogin(ctx, clientData.Login)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrLoginExist):
+			return ErrLoginExist
+
+		case errors.Is(err, ErrTimeCtx):
+			return ErrTimeCtx
+
+		case errors.Is(err, ErrInternal):
+			return ErrInternal
+		}
+
+		return ErrInternal
+	}
+
+	if clientData.Phone == "" {
+		return ErrBadRequest
+	}
+
+	err = c.CheckPhone(ctx, clientData.Phone)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrPhoneRegistered):
+			return ErrPhoneRegistered
+
+		case errors.Is(err, ErrTimeCtx):
+			return ErrTimeCtx
+
+		case errors.Is(err, ErrInternal):
+			return ErrInternal
+		}
+
+		return ErrInternal
+	}
+
 	if clientData.FirstName == "" {
 		return ErrBadRequest
 	}
@@ -63,10 +107,6 @@ func (c *Client) NewClient(ctx context.Context, clientData NewClientStruct) (err
 
 	if clientData.MiddleName == "" {
 		clientData.MiddleName = "-"
-	}
-
-	if clientData.Login == "" {
-		return ErrBadRequest
 	}
 
 	if clientData.Password == "" {
@@ -83,28 +123,19 @@ func (c *Client) NewClient(ctx context.Context, clientData NewClientStruct) (err
 		clientData.EMail = "-"
 	}
 
-	if clientData.Phone == "" {
-		return ErrBadRequest
-	}
-
 	if clientData.Avatar == "" {
 		clientData.Avatar = "NO-AVATAR"
-	}
-
-	err = c.CheckLogin(ctx, clientData.Login)
-	if err != nil {
-		return ErrLoginExist
-	}
-
-	err = c.CheckPhone(ctx, clientData.Phone)
-	if err != nil {
-		return ErrPhoneRegistered
 	}
 
 	_, err = c.pool.Exec(ctx, dl.ClientNew,
 		clientData.FirstName, clientData.LastName, clientData.MiddleName, clientData.Login, password, clientData.EMail, clientData.Avatar, clientData.Phone)
 	if err != nil {
-		return err
+		switch {
+		case errors.Is(err, context.DeadlineExceeded):
+			return ErrTimeCtx
+		}
+
+		return ErrInternal
 	}
 
 	return nil
@@ -123,9 +154,36 @@ func (c *Client) EditClientPass(ctx context.Context, clientData EditClientPass) 
 		return ErrBadRequest
 	}
 
+	err = c.CheckId(ctx, clientData.Id)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrInternal):
+			return ErrInternal
+
+		case errors.Is(err, errId):
+			return ErrBadRequest
+
+		case errors.Is(err, ErrTimeCtx):
+			return ErrTimeCtx
+		}
+
+		return ErrInternal
+	}
+
 	oldPass, err := c.CheckPass(ctx, clientData.Id)
 	if err != nil {
-		return ErrBadRequest
+		switch {
+		case errors.Is(err, errId):
+			return ErrBadRequest
+
+		case errors.Is(err, ErrTimeCtx):
+			return ErrTimeCtx
+
+		case errors.Is(err, ErrInternal):
+			return ErrInternal
+		}
+
+		return ErrInternal
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(oldPass), []byte(clientData.OldPass))
@@ -136,12 +194,17 @@ func (c *Client) EditClientPass(ctx context.Context, clientData EditClientPass) 
 	password, err := bcrypt.GenerateFromPassword([]byte(clientData.NewPass), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("can't hashing password: %v", err)
-		return err
+		return ErrInternal
 	}
 
 	_, err = c.pool.Exec(ctx, dl.ClientUpdatePass, clientData.Id, password)
 	if err != nil {
-		return err
+		switch {
+		case errors.Is(err, context.DeadlineExceeded):
+			return ErrTimeCtx
+		}
+
+		return ErrInternal
 	}
 
 	return nil
@@ -164,11 +227,21 @@ func (c *Client) EditClientAvatar(ctx context.Context, clientId int64, avatarUrl
 
 		case errors.Is(err, errId):
 			return ErrBadRequest
+
+		case errors.Is(err, ErrTimeCtx):
+			return ErrTimeCtx
 		}
+
+		return ErrInternal
 	}
 
 	_, err = c.pool.Exec(ctx, dl.ClientUpdateAvatar, clientId, avatarUrl)
 	if err != nil {
+		switch {
+		case errors.Is(err, ErrTimeCtx):
+			return ErrTimeCtx
+		}
+
 		return ErrInternal
 	}
 

@@ -3,18 +3,21 @@ package client
 import (
 	"context"
 	"errors"
+	"github.com/burhon94/clientAuth/pkg/dl"
 	"github.com/jackc/pgx/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var errId = errors.New("no exist id")
-
 func (c *Client) CheckId(ctx context.Context, checkId int64) error {
 	var id int64
-	err := c.pool.QueryRow(ctx, `SELECT id FROM clients WHERE id = $1`, checkId).Scan(&id)
+	err := c.pool.QueryRow(ctx, dl.CheckId, checkId).Scan(&id)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
 			return errId
+
+		case errors.Is(err, context.DeadlineExceeded):
+			return ErrTimeCtx
 		}
 
 		return ErrInternal
@@ -25,28 +28,54 @@ func (c *Client) CheckId(ctx context.Context, checkId int64) error {
 
 func (c *Client) CheckLogin(ctx context.Context, login string) error {
 	temp := ""
-	err := c.pool.QueryRow(ctx, `SELECT login from clients WHERE login = $1`, login).Scan(&temp)
-	if err == nil {
-		return ErrLoginExist
+	err := c.pool.QueryRow(ctx, dl.CheckLogin, login).Scan(&temp)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil
+
+		case errors.Is(err, context.DeadlineExceeded):
+			return ErrTimeCtx
+
+		}
+
+		return ErrInternal
 	}
 
-	return nil
+	return ErrLoginExist
 }
 
 func (c *Client) CheckPhone(ctx context.Context, phone string) error {
 	temp := ""
-	err := c.pool.QueryRow(ctx, `SELECT phone from clients WHERE phone = $1`, phone).Scan(&temp)
-	if err == nil {
-		return ErrPhoneRegistered
+	err := c.pool.QueryRow(ctx, dl.CheckPhone, phone).Scan(&temp)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil
+
+		case errors.Is(err, context.DeadlineExceeded):
+			return ErrTimeCtx
+
+		}
+
+		return ErrInternal
 	}
 
-	return nil
+	return ErrPhoneRegistered
 }
 
 func (c *Client) CheckPass(ctx context.Context, id int64) (oldPass string, err error) {
-	err = c.pool.QueryRow(ctx, `SELECT password from clients WHERE id = $1`, id).Scan(&oldPass)
+	err = c.pool.QueryRow(ctx, dl.CheckPass, id).Scan(&oldPass)
 	if err != nil {
-		return "", err
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return "", errId
+
+		case errors.Is(err, context.DeadlineExceeded):
+			return "", ErrTimeCtx
+		}
+
+		return "", ErrInternal
 	}
 
 	return oldPass, nil
@@ -54,10 +83,15 @@ func (c *Client) CheckPass(ctx context.Context, id int64) (oldPass string, err e
 
 func (c *Client) CheckPassWithLogin(ctx context.Context, login, requiredPass string) (err error) {
 	var pass string
-	err = c.pool.QueryRow(ctx, `SELECT password from clients WHERE login = $1`, login).Scan(&pass)
+	err = c.pool.QueryRow(ctx, dl.CheckPassAndLogin, login).Scan(&pass)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
 			return ErrInvalidLogin
+
+		case errors.Is(err, context.DeadlineExceeded):
+			return ErrTimeCtx
+
 		}
 
 		return ErrInternal
