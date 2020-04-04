@@ -89,7 +89,7 @@ func (s *Server) handleSignIn() http.HandlerFunc {
 			return
 		}
 
-		ctx, _ := context.WithTimeout(request.Context(), time.Hour)
+		ctx, _ := context.WithTimeout(request.Context(), time.Second)
 		err = s.clientSvc.SignIn(ctx, requestData)
 		switch {
 		case errors.Is(err, client.ErrInvalidLogin):
@@ -101,6 +101,13 @@ func (s *Server) handleSignIn() http.HandlerFunc {
 
 		case errors.Is(err, client.ErrInvalidPassword):
 			err := responses.SetResponseBadRequest(writer, "err.password_wrong")
+			if err != nil {
+				responses.InternalErr(writer)
+			}
+			return
+
+		case errors.Is(err, client.ErrInternal):
+			err := responses.SetResponseInternalErr(writer, "err.internal_error")
 			if err != nil {
 				responses.InternalErr(writer)
 			}
@@ -158,6 +165,47 @@ func (s *Server) handleEditPass() http.HandlerFunc {
 				if err != nil {
 					responses.InternalErr(writer)
 				}
+			}
+		}
+
+		err = responses.ResponseOK(writer)
+		if err != nil {
+			responses.InternalErr(writer)
+		}
+	}
+}
+
+func (s *Server) handleEditAvatar() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		var dataRequest client.EditClientAvatar
+		err := readJSON.ReadJSONHTTP(request, &dataRequest)
+		if err != nil {
+			err := responses.SetResponseBadRequest(writer, "err.json_invalid")
+			if err != nil {
+				responses.InternalErr(writer)
+			}
+
+			return
+		}
+
+		ctx, _ := context.WithTimeout(request.Context(), time.Second)
+		err = s.clientSvc.EditClientAvatar(ctx, dataRequest.Id, dataRequest.AvatarUrl)
+		if err != nil {
+			switch {
+			case errors.Is(err, client.ErrBadRequest):
+				err := responses.SetResponseBadRequest(writer, "err.bad_request")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+
+			case errors.Is(err, client.ErrInternal):
+				err := responses.SetResponseInternalErr(writer, "err.internal_error")
+				if err != nil {
+					responses.InternalErr(writer)
+				}
+				return
+
 			}
 		}
 

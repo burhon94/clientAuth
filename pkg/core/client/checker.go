@@ -2,8 +2,26 @@ package client
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v4"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var errId = errors.New("no exist id")
+
+func (c *Client) CheckId(ctx context.Context, checkId int64) error {
+	var id int64
+	err := c.pool.QueryRow(ctx, `SELECT id FROM clients WHERE id = $1`, checkId).Scan(&id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return errId
+		}
+
+		return ErrInternal
+	}
+
+	return nil
+}
 
 func (c *Client) CheckLogin(ctx context.Context, login string) error {
 	temp := ""
@@ -38,7 +56,11 @@ func (c *Client) CheckPassWithLogin(ctx context.Context, login, requiredPass str
 	var pass string
 	err = c.pool.QueryRow(ctx, `SELECT password from clients WHERE login = $1`, login).Scan(&pass)
 	if err != nil {
-		return ErrInvalidLogin
+		if err == pgx.ErrNoRows {
+			return ErrInvalidLogin
+		}
+
+		return ErrInternal
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(pass), []byte(requiredPass))

@@ -10,3 +10,5 @@ const ClientNew = `INSERT INTO clients(first_name, last_name, middle_name, login
 values ($1, $2, $3 , $4, $5, $6, $7, $8);`
 
 const ClientUpdatePass = `UPDATE clients SET password = $2 WHERE id = $1;`
+
+const ClientUpdateAvatar = `UPDATE clients SET avatar = $2 WHERE id = $1;`

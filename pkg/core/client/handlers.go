@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"github.com/burhon94/clientAuth/pkg/dl"
+	"github.com/jackc/pgx"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 )
 
 var ErrBadRequest = errors.New("bad request")
+var ErrInternal = errors.New("internal error")
 var ErrLoginExist = errors.New("login is exist")
 var ErrPhoneRegistered = errors.New("phone been registered")
 var ErrInvalidPassword = errors.New("invalid password")
@@ -27,6 +29,10 @@ func (c *Client) SignIn(ctx context.Context, clientRequest SignIn) (err error) {
 
 	err = c.CheckPassWithLogin(ctx, clientRequest.Login, clientRequest.Pass)
 	switch {
+	case errors.Is(err, ErrInternal):
+		return ErrInternal
+
+
 	case errors.Is(err, ErrInvalidLogin):
 		return ErrInvalidLogin
 
@@ -36,7 +42,11 @@ func (c *Client) SignIn(ctx context.Context, clientRequest SignIn) (err error) {
 
 	err = c.pool.QueryRow(ctx, dl.SignIn, clientRequest.Login).Scan(&name, &surName, &midleName, &eMail, &avata, &phone)
 	if err != nil {
-		return ErrInvalidLogin
+		if err == pgx.ErrNoRows {
+			return ErrInvalidLogin
+		}
+
+		return ErrInternal
 	}
 
 	return nil
@@ -132,6 +142,34 @@ func (c *Client) EditClientPass(ctx context.Context, clientData EditClientPass) 
 	_, err = c.pool.Exec(ctx, dl.ClientUpdatePass, clientData.Id, password)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (c *Client) EditClientAvatar(ctx context.Context, clientId int64, avatarUrl string) (err error) {
+	if clientId <= 0 {
+		return ErrBadRequest
+	}
+
+	if avatarUrl == "" {
+		return ErrBadRequest
+	}
+
+	err = c.CheckId(ctx, clientId)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrInternal):
+			return ErrInternal
+
+		case errors.Is(err, errId):
+			return ErrBadRequest
+		}
+	}
+
+	_, err = c.pool.Exec(ctx, dl.ClientUpdateAvatar, clientId, avatarUrl)
+	if err != nil {
+		return ErrInternal
 	}
 
 	return nil
