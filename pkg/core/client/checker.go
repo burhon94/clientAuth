@@ -1,6 +1,9 @@
 package client
 
-import "context"
+import (
+	"context"
+	"golang.org/x/crypto/bcrypt"
+)
 
 func (c *Client) CheckLogin(ctx context.Context, login string) error {
 	temp := ""
@@ -29,4 +32,19 @@ func (c *Client) CheckPass(ctx context.Context, id int64) (oldPass string, err e
 	}
 
 	return oldPass, nil
+}
+
+func (c *Client) CheckPassWithLogin(ctx context.Context, login, requiredPass string) (err error) {
+	var pass string
+	err = c.pool.QueryRow(ctx, `SELECT password from clients WHERE login = $1`, login).Scan(&pass)
+	if err != nil {
+		return ErrInvalidLogin
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(pass), []byte(requiredPass))
+	if err != nil {
+		return ErrInvalidPassword
+	}
+
+	return nil
 }

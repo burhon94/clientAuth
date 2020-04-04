@@ -12,7 +12,12 @@ func (s *Server) InitRoutes() {
 	)
 
 	s.router.POST(
+		"/api/signin",
+		s.handleSignIn(),
+	)
+
+	s.router.POST(
 		"/api/client/password",
 		s.handleEditPass(),
-		)
+	)
 }

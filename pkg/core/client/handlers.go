@@ -12,6 +12,35 @@ var ErrBadRequest = errors.New("bad request")
 var ErrLoginExist = errors.New("login is exist")
 var ErrPhoneRegistered = errors.New("phone been registered")
 var ErrInvalidPassword = errors.New("invalid password")
+var ErrInvalidLogin = errors.New("invalid login")
+
+func (c *Client) SignIn(ctx context.Context, clientRequest SignIn) (err error) {
+	if clientRequest.Login == "" {
+		return ErrBadRequest
+	}
+
+	if clientRequest.Pass == "" {
+		return ErrBadRequest
+	}
+
+	var name, surName, midleName, eMail, avata, phone string
+
+	err = c.CheckPassWithLogin(ctx, clientRequest.Login, clientRequest.Pass)
+	switch {
+	case errors.Is(err, ErrInvalidLogin):
+		return ErrInvalidLogin
+
+	case errors.Is(err, ErrInvalidPassword):
+		return ErrInvalidPassword
+	}
+
+	err = c.pool.QueryRow(ctx, dl.SignIn, clientRequest.Login).Scan(&name, &surName, &midleName, &eMail, &avata, &phone)
+	if err != nil {
+		return ErrInvalidLogin
+	}
+
+	return nil
+}
 
 func (c *Client) NewClient(ctx context.Context, clientData NewClientStruct) (err error) {
 	if clientData.FirstName == "" {

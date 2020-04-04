@@ -17,3 +17,5 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO clients(first_name, last_name, middle_name, login, password, e_mail, avatar, phone)
 values (?, ?, ?, ?, ?, ?, ?, ?);
+
+SELECT first_name, last_name, middle_name, e_mail, avatar, phone, password FROM clients WHERE login = ?;

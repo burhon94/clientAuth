@@ -76,6 +76,52 @@ func (s *Server) handleNewClient() http.HandlerFunc {
 	}
 }
 
+func (s *Server) handleSignIn() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		var requestData client.SignIn
+		err := readJSON.ReadJSONHTTP(request, &requestData)
+		if err != nil {
+			err := responses.SetResponseBadRequest(writer, "err.json_invalid")
+			if err != nil {
+				responses.InternalErr(writer)
+			}
+
+			return
+		}
+
+		ctx, _ := context.WithTimeout(request.Context(), time.Hour)
+		err = s.clientSvc.SignIn(ctx, requestData)
+		switch {
+		case errors.Is(err, client.ErrInvalidLogin):
+			err := responses.SetResponseBadRequest(writer, "err.login_wrong")
+			if err != nil {
+				responses.InternalErr(writer)
+			}
+			return
+
+		case errors.Is(err, client.ErrInvalidPassword):
+			err := responses.SetResponseBadRequest(writer, "err.password_wrong")
+			if err != nil {
+				responses.InternalErr(writer)
+			}
+			return
+
+		case errors.Is(err, client.ErrBadRequest):
+			err := responses.SetResponseBadRequest(writer, "err.bad_request")
+			if err != nil {
+				responses.InternalErr(writer)
+			}
+			return
+
+		}
+
+		err = responses.ResponseOK(writer)
+		if err != nil {
+			responses.InternalErr(writer)
+		}
+	}
+}
+
 func (s *Server) handleEditPass() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		var bodyRequest client.EditClientPass
@@ -89,7 +135,7 @@ func (s *Server) handleEditPass() http.HandlerFunc {
 			return
 		}
 
-		ctx, _ := context.WithTimeout(request.Context(), time.Second*500)
+		ctx, _ := context.WithTimeout(request.Context(), time.Second)
 		err = s.clientSvc.EditClientPass(ctx, bodyRequest)
 		if err != nil {
 			switch {
