@@ -34,3 +34,12 @@ type EditClient struct {
 	MiddleName string `json:"middle_name"`
 	EMail      string `json:"e_mail"`
 }
+
+type TokenPayload struct {
+	Id int64 `json:"id"`
+	Exp int64 `json:"exp"`
+}
+
+type Token struct {
+	Token string `json:"token"`
+}

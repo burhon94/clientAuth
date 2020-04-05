@@ -8,6 +8,7 @@ import (
 	"github.com/burhon94/bdi/pkg/di"
 	"github.com/burhon94/clientAuth/cmd/auth/server"
 	"github.com/burhon94/clientAuth/pkg/core/client"
+	"github.com/burhon94/clientAuth/pkg/jwt"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"net"
@@ -16,20 +17,22 @@ import (
 
 type DSN string
 
-// -host 0.0.0.0 -port 9999 -dsn postgres://user:pass@localhost:5555/client-auth
+// -host 0.0.0.0 -port 9999 -dsn postgres://user:pass@localhost:5555/client-auth -key alifKey
 var (
 	host = flag.String("host", "0.0.0.0", "Server host")
 	port = flag.String("port", "9999", "Server port")
 	dsn  = flag.String("dsn", "postgres://user:pass@localhost:5555/client-auth", "Server DSN")
+	secret = flag.String("key", "alifKey", "key")
 )
 
 func main() {
 	flag.Parse()
 	addr := net.JoinHostPort(*host, *port)
-	serverUp(addr, *dsn)
+	keySecret := jwt.Secret(*secret)
+	serverUp(addr, *dsn, keySecret)
 }
 
-func serverUp(addr string, dsn string) {
+func serverUp(addr string, dsn string, secret jwt.Secret) {
 	container := di.NewContainer()
 
 	err := container.Provide(
@@ -44,6 +47,7 @@ func serverUp(addr string, dsn string) {
 
 			return pool
 		},
+		func() jwt.Secret { return secret },
 		client.NewClient,
 	)
 	if err != nil {

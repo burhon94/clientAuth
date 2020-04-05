@@ -12,8 +12,8 @@ func (s *Server) InitRoutes() {
 	)
 
 	s.router.POST(
-		"/api/signin",
-		s.handleSignIn(),
+		"/api/token",
+		s.handleToken(),
 	)
 
 	s.router.POST(

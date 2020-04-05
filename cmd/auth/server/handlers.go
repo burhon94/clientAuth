@@ -91,7 +91,7 @@ func (s *Server) handleNewClient() http.HandlerFunc {
 	}
 }
 
-func (s *Server) handleSignIn() http.HandlerFunc {
+func (s *Server) handleToken() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		var requestData client.SignIn
 		err := readJSON.ReadJSONHTTP(request, &requestData)
@@ -105,7 +105,7 @@ func (s *Server) handleSignIn() http.HandlerFunc {
 		}
 
 		ctx, _ := context.WithTimeout(request.Context(), time.Second)
-		err = s.clientSvc.SignIn(ctx, requestData)
+		token, err := s.clientSvc.GenerateToken(ctx, requestData)
 		if err != nil {
 			switch {
 			case errors.Is(err, client.ErrInvalidLogin):
@@ -151,10 +151,15 @@ func (s *Server) handleSignIn() http.HandlerFunc {
 			}
 		}
 
-		err = responses.ResponseOK(writer)
+		err = responses.SetResponseJSON(writer, &token)
 		if err != nil {
 			responses.InternalErr(writer)
 		}
+
+		//err = responses.ResponseOK(writer)
+		//if err != nil {
+		//	responses.InternalErr(writer)
+		//}
 	}
 }
 

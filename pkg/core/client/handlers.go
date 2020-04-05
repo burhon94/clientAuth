@@ -4,56 +4,66 @@ import (
 	"context"
 	"errors"
 	"github.com/burhon94/clientAuth/pkg/dl"
+	"github.com/burhon94/clientAuth/pkg/jwt"
 	"github.com/jackc/pgx"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"time"
 )
 
-func (c *Client) SignIn(ctx context.Context, clientRequest SignIn) (err error) {
+func (c *Client) GenerateToken(ctx context.Context, clientRequest SignIn) (token Token, err error) {
 	if clientRequest.Login == "" {
-		return ErrBadRequest
+		return token, ErrBadRequest
 	}
 
 	if clientRequest.Pass == "" {
-		return ErrBadRequest
+		return token, ErrBadRequest
 	}
 
 	err = c.CheckPassWithLogin(ctx, clientRequest.Login, clientRequest.Pass)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrInternal):
-			return ErrInternal
+			return token, ErrInternal
 
 		case errors.Is(err, ErrInvalidLogin):
-			return ErrInvalidLogin
+			return token, ErrInvalidLogin
 
 		case errors.Is(err, ErrInvalidPassword):
-			return ErrInvalidPassword
+			return token, ErrInvalidPassword
 
 		case errors.Is(err, ErrTimeCtx):
-			return ErrTimeCtx
+			return token, ErrTimeCtx
 		}
 
-		return ErrInternal
+		return token, ErrInternal
 	}
 
-	var name, surName, middleName, eMail, avatar, phone string
+	var id int64
 
-	err = c.pool.QueryRow(ctx, dl.SignIn, clientRequest.Login).Scan(&name, &surName, &middleName, &eMail, &avatar, &phone)
+	err = c.pool.QueryRow(ctx, dl.Token, clientRequest.Login).Scan(&id)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
-			return ErrInvalidLogin
+			return token, ErrInvalidLogin
 
 		case errors.Is(err, context.DeadlineExceeded):
-			return ErrTimeCtx
+			return token, ErrTimeCtx
 
 		}
 
-		return ErrInternal
+		return token, ErrInternal
 	}
 
-	return nil
+	token.Token, err = jwt.Encode(TokenPayload{
+		Id:  id,
+		Exp: time.Now().Add(time.Hour).Unix(),
+	}, c.secret)
+	if err != nil {
+		return Token{}, ErrInternal
+	}
+
+	return
 }
 
 func (c *Client) NewClient(ctx context.Context, clientData NewClientStruct) (err error) {

@@ -56,3 +56,11 @@ func SetResponseTimeOut(writer http.ResponseWriter) error {
 
 	return err
 }
+
+func SetResponseJSON(writer http.ResponseWriter, dto interface{}) error {
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	err := writeJSON.WriteJSONHTTP(writer, &dto)
+
+	return err
+}
