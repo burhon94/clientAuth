@@ -8,6 +8,8 @@ import (
 	"github.com/jackc/pgx"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"net/http"
+	"strings"
 	"time"
 )
 
@@ -56,6 +58,7 @@ func (c *Client) GenerateToken(ctx context.Context, clientRequest SignIn) (token
 	}
 
 	token.Token, err = jwt.Encode(TokenPayload{
+		Id:  id,
 		Exp: time.Now().Add(time.Hour).Unix(),
 	}, c.secret)
 	if err != nil {
@@ -150,8 +153,19 @@ func (c *Client) NewClient(ctx context.Context, clientData NewClientStruct) (err
 	return nil
 }
 
-func (c *Client) EditClientPass(ctx context.Context, clientData EditClientPass) (err error) {
-	if clientData.Id <= 0 {
+func (c *Client) EditClientPass(ctx context.Context, request *http.Request, clientData EditClientPass) (err error) {
+	token, err := getToken(request)
+	if err != nil {
+		return ErrBadRequest
+	}
+
+	var tokenData TokenPayload
+	err = jwt.Decode(token, &tokenData)
+	if err != nil {
+		return ErrBadRequest
+	}
+
+	if tokenData.Id <= 0 {
 		return ErrBadRequest
 	}
 
@@ -163,7 +177,7 @@ func (c *Client) EditClientPass(ctx context.Context, clientData EditClientPass) 
 		return ErrBadRequest
 	}
 
-	err = c.CheckId(ctx, clientData.Id)
+	err = c.CheckId(ctx, tokenData.Id)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrInternal):
@@ -179,7 +193,7 @@ func (c *Client) EditClientPass(ctx context.Context, clientData EditClientPass) 
 		return ErrInternal
 	}
 
-	oldPass, err := c.CheckPass(ctx, clientData.Id)
+	oldPass, err := c.CheckPass(ctx, tokenData.Id)
 	if err != nil {
 		switch {
 		case errors.Is(err, errId):
@@ -206,7 +220,7 @@ func (c *Client) EditClientPass(ctx context.Context, clientData EditClientPass) 
 		return ErrInternal
 	}
 
-	_, err = c.pool.Exec(ctx, dl.ClientUpdatePass, clientData.Id, password)
+	_, err = c.pool.Exec(ctx, dl.ClientUpdatePass, tokenData.Id, password)
 	if err != nil {
 		switch {
 		case errors.Is(err, context.DeadlineExceeded):
@@ -219,8 +233,19 @@ func (c *Client) EditClientPass(ctx context.Context, clientData EditClientPass) 
 	return nil
 }
 
-func (c *Client) EditClientAvatar(ctx context.Context, clientId int64, avatarUrl string) (err error) {
-	if clientId <= 0 {
+func (c *Client) EditClientAvatar(ctx context.Context, request *http.Request, avatarUrl string) (err error) {
+	token, err := getToken(request)
+	if err != nil {
+		return ErrBadRequest
+	}
+
+	var tokenData TokenPayload
+	err = jwt.Decode(token, &tokenData)
+	if err != nil {
+		return ErrBadRequest
+	}
+
+	if tokenData.Id <= 0 {
 		return ErrBadRequest
 	}
 
@@ -228,7 +253,7 @@ func (c *Client) EditClientAvatar(ctx context.Context, clientId int64, avatarUrl
 		return ErrBadRequest
 	}
 
-	err = c.CheckId(ctx, clientId)
+	err = c.CheckId(ctx, tokenData.Id)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrInternal):
@@ -244,7 +269,7 @@ func (c *Client) EditClientAvatar(ctx context.Context, clientId int64, avatarUrl
 		return ErrInternal
 	}
 
-	_, err = c.pool.Exec(ctx, dl.ClientUpdateAvatar, clientId, avatarUrl)
+	_, err = c.pool.Exec(ctx, dl.ClientUpdateAvatar, tokenData.Id, avatarUrl)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrTimeCtx):
@@ -257,12 +282,23 @@ func (c *Client) EditClientAvatar(ctx context.Context, clientId int64, avatarUrl
 	return nil
 }
 
-func (c *Client) EditClient(ctx context.Context, id int64, firstName, lastName, middleName, eMail string) error {
-	if id <= 0 {
+func (c *Client) EditClient(ctx context.Context, request *http.Request, requestData EditClient) error {
+	token, err := getToken(request)
+	if err != nil {
 		return ErrBadRequest
 	}
 
-	err := c.CheckId(ctx, id)
+	var tokenData TokenPayload
+	err = jwt.Decode(token, &tokenData)
+	if err != nil {
+		return ErrBadRequest
+	}
+
+	if tokenData.Id <= 0 {
+		return ErrBadRequest
+	}
+
+	err = c.CheckId(ctx, tokenData.Id)
 	if err != nil {
 		switch {
 		case errors.Is(err, errId):
@@ -276,23 +312,24 @@ func (c *Client) EditClient(ctx context.Context, id int64, firstName, lastName, 
 		}
 	}
 
-	if firstName == "" {
+	if requestData.FirstName == "" {
 		return ErrBadRequest
 	}
 
-	if lastName == "" {
+	if requestData.LastName == "" {
 		return ErrBadRequest
 	}
 
-	if middleName == "" {
-		middleName = ""
+	if requestData.MiddleName == "" {
+		requestData.MiddleName = ""
 	}
 
-	if eMail == "" {
-		eMail = ""
+	if requestData.EMail == "" {
+		requestData.EMail = ""
 	}
 
-	_, err = c.pool.Exec(ctx, dl.ClientUpdateData, id, firstName, lastName, middleName, eMail)
+	_, err = c.pool.Exec(ctx, dl.ClientUpdateData,
+		tokenData.Id, requestData.FirstName, requestData.LastName, requestData.MiddleName, requestData.EMail)
 	if err != nil {
 		switch {
 		case errors.Is(err, context.DeadlineExceeded):
@@ -303,4 +340,18 @@ func (c *Client) EditClient(ctx context.Context, id int64, firstName, lastName, 
 	}
 
 	return nil
+}
+
+func getToken(request *http.Request) (token string, err error) {
+	header := request.Header.Get("Authorization")
+	if header == "" {
+		return
+	}
+
+	if !strings.HasPrefix(header, "Bearer ") {
+		return
+	}
+
+	token = header[len("Bearer "):]
+	return
 }

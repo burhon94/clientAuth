@@ -173,7 +173,7 @@ func (s *Server) handleEditPass() http.HandlerFunc {
 		}
 
 		ctx, _ := context.WithTimeout(request.Context(), time.Second)
-		err = s.clientSvc.EditClientPass(ctx, bodyRequest)
+		err = s.clientSvc.EditClientPass(ctx, request, bodyRequest)
 		if err != nil {
 			switch {
 			case errors.Is(err, client.ErrBadRequest):
@@ -232,7 +232,7 @@ func (s *Server) handleEditAvatar() http.HandlerFunc {
 		}
 
 		ctx, _ := context.WithTimeout(request.Context(), time.Second)
-		err = s.clientSvc.EditClientAvatar(ctx, dataRequest.Id, dataRequest.AvatarUrl)
+		err = s.clientSvc.EditClientAvatar(ctx, request, dataRequest.AvatarUrl)
 		if err != nil {
 			switch {
 			case errors.Is(err, client.ErrBadRequest):
@@ -286,7 +286,7 @@ func (s *Server) handleEditClient() http.HandlerFunc {
 		}
 
 		ctx, _ := context.WithTimeout(request.Context(), time.Second)
-		err = s.clientSvc.EditClient(ctx, clientRequest.Id, clientRequest.FirstName, clientRequest.LastName, clientRequest.MiddleName, clientRequest.EMail)
+		err = s.clientSvc.EditClient(ctx, request, clientRequest)
 		if err != nil {
 			switch {
 			case errors.Is(err, client.ErrBadRequest):

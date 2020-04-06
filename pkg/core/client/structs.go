@@ -17,18 +17,15 @@ type NewClientStruct struct {
 }
 
 type EditClientPass struct {
-	Id      int64  `json:"id"`
 	OldPass string `json:"old_pass"`
 	NewPass string `json:"new_pass"`
 }
 
 type EditClientAvatar struct {
-	Id        int64  `json:"id"`
 	AvatarUrl string `json:"avatar_url"`
 }
 
 type EditClient struct {
-	Id         int64  `json:"id"`
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
 	MiddleName string `json:"middle_name"`
@@ -36,6 +33,7 @@ type EditClient struct {
 }
 
 type TokenPayload struct {
+	Id int64 `json:"id"`
 	Exp int64 `json:"exp"`
 }
 
