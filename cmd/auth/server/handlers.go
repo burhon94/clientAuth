@@ -156,10 +156,6 @@ func (s *Server) handleToken() http.HandlerFunc {
 			responses.InternalErr(writer)
 		}
 
-		//err = responses.ResponseOK(writer)
-		//if err != nil {
-		//	responses.InternalErr(writer)
-		//}
 	}
 }
 

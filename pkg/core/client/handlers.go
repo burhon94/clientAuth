@@ -56,7 +56,6 @@ func (c *Client) GenerateToken(ctx context.Context, clientRequest SignIn) (token
 	}
 
 	token.Token, err = jwt.Encode(TokenPayload{
-		Id:  id,
 		Exp: time.Now().Add(time.Hour).Unix(),
 	}, c.secret)
 	if err != nil {

@@ -36,7 +36,6 @@ type EditClient struct {
 }
 
 type TokenPayload struct {
-	Id int64 `json:"id"`
 	Exp int64 `json:"exp"`
 }
 
